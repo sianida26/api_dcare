@@ -134,9 +134,6 @@ components:
         accessToken:
           type: string
           example: 'dXNlckBleGFtcGxlLmNvbTpzZWNyZXQ='
-        refreshToken:
-          type: string
-          example: 'hdsfkjhdskjfksdhfkhsdf='
     ApiResponse:
       type: object
       properties:

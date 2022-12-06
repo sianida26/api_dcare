@@ -11,6 +11,8 @@ info:
 tags:
   - name: authentication
     description: Authentication related endpoints
+  - name: Artikel
+    description: Endpoint CRUD Artikel
 paths:
   /auth/login: 
     post:
@@ -19,21 +21,21 @@ paths:
       summary: Login user ke sistem
       description: ""
       operationId: authLogin
-      parameters:
-        - name: email
-          in: query
-          description: Email user yang digunakan untuk login
-          required: true
-          schema:
-            type: string
-            example: fulanbinfulanah@gmail.com
-        - name: password
-          in: query
-          description: Password user dalam bentuk plaintext
-          required: true
-          schema:
-            type: string
-            example: fulanbinfulanah1234
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: Email user
+                password:
+                  type: string
+                  description: Password user dalam plaintext
+            example:
+              email: 'fulan@gmail.com'
+              password: 'fulanbinfulanah123'
       responses:
         "200":
           description: Successful
@@ -54,28 +56,25 @@ paths:
       summary: API untuk mendaftar user baru
       description: ""
       operationId: authRegister
-      parameters:
-        - name: name
-          in: query
-          description: Nama lengkap user
-          required: true
-          schema:
-            type: string
-            example: Fulan bin Fulanah
-        - name: email
-          in: query
-          description: Email user
-          required: true
-          schema:
-            type: string
-            example: fulanbinfulanah@gmail.cok
-        - name: password
-          in: query
-          description: Password user dalam plaintext
-          required: true
-          schema:
-            type: string
-            example: fulanbinfulanah123
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Nama lengkap user
+                email:
+                  type: string
+                  description: Email user
+                password:
+                  type: string
+                  description: Password user dalam plaintext
+            example:
+              name: 'Fulan bin Fulanah'
+              email: 'fulan@gmail.com'
+              password: 'fulanbinfulanah123'
       responses:
         "200":
           description: successful operation
@@ -85,28 +84,200 @@ paths:
                 $ref: '#/components/schemas/LoginResponse'
                 
         "422":
-          description: Form validation error
+          $ref: '#/components/responses/FormError'
+  /articles:
+    get:
+      tags:
+        - Artikel
+      summary: Ambil data semua artikel
+      security:
+        - bearerAuth: []
+      operationId: getArticles
+      parameters:
+        - name: perPage
+          in: query
+          required: true
+          description: Jumlah data yang ditampilkan per page
+          schema:
+            type: number
+        - name: page
+          in: query
+          required: true
+          description: Halaman yang ingin ditampilkan
+          schema:
+            type: number
+      responses:
+        "200":
+          description: "Data artikel"
           content:
             application/json:
               schema:
                 type: object
-                required: ['']
                 properties:
-                  name:
-                    type: string
-                    description: 'Error ketika parameter "name" kosong atau lebih dari 255 karakter'
-                    example: 'Harus diisi'
-                  email:
-                    type: string
-                    description: 'Error ketika parameter "email" kosong, tidak valid, atau sudah terpakai.'
-                    example: 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.'
-                  password:
-                    type: string
-                    description: 'Error ketika parameter "password" kosong atau lebih kurang dari 8 karakter'
-                    example: 'Password minimal harus lebih dari 7 karakter!'
+                  currentPage:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/Article'
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Artikel
+      summary: Membuat artikel
+      security:
+        - bearerAuth: []
+      operationId: createArticle
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Judul Artikel
+                content:
+                  type: string
+                  description: Isi artikel berupa HTML formatted. Belum diclean
+                cover:
+                  type: string
+                  format: binary
+                  description: File cover artikel
+            example:
+              title: 'Heboh! Seorang pria menikahi tiang lampu jalanan'
+              content: '<p>Patrick menikahi lampu tiang jalanan'
+      responses:
+        "200":
+          $ref: '#/components/responses/MessageOnly'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "422":
+          $ref: '#/components/responses/FormError'
+  /articles/{id}:
+    get:
+      tags:
+        - Artikel
+      summary: Lihat detail artikel
+      security:
+        - bearerAuth: []
+      operationId: getArticleById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: id dari artikel
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Data artikel"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - Artikel
+      summary: Mengedit artikel
+      security:
+        - bearerAuth: []
+      operationId: editArticle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: id dari artikel
+          schema:
+            type: integer
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Judul Artikel
+                content:
+                  type: string
+                  description: Isi artikel berupa HTML formatted. Belum diclean
+                cover:
+                  type: string
+                  format: binary
+                  description: File cover artikel
+            example:
+              title: 'Heboh! Seorang pria menikahi tiang lampu jalanan'
+              content: '<p>Patrick menikahi lampu tiang jalanan'
+      responses:
+        "200":
+          $ref: '#/components/responses/MessageOnly'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/FormError'
+    delete:
+      tags:
+        - Artikel
+      summary: Mengedit artikel
+      security:
+        - bearerAuth: []
+      operationId: deleteArticle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: id dari artikel
+          schema:
+            type: integer
+      responses:
+        "200":
+          $ref: '#/components/responses/MessageOnly'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+          
 servers:
   - url: https://api.dcare.id/v1/
 components:
+  responses:
+    Unauthorized:
+      description: Invalid or empty bearer token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    MessageOnly:
+      description: Object yang hanya berisi property "message"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageResponse'
+    FormError:
+      description: Isi Form ada yang error. Object properties merupakan property dari request yang error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormErrorResponse'
+    NotFound:
+      description: Message seperti "User tidak ditemukan". Tergantung konteks
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
   schemas:
     LoginResponse:
       type: object
@@ -149,4 +320,50 @@ components:
       properties:
         message:
           type: string
-          example: 'Oops. sepertinya terjadi kesalahan'
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+    FormErrorResponse:
+      type: object
+      additionalProperties:
+        type: string
+    Article:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: id artikel
+          example: 1
+        title:
+          type: string
+          description: judul artikel
+          example: Heboh! Seorang pria menikahi tiang lampu jalanan
+        cover_url:
+          type: string
+          description: URL gambar cover
+          example: https://api.dcare.id/images/465875834534.jpg
+        content:
+          type: string
+          description: Isi artikel berupa HTML formatted
+          example: <p>Patrick? itukah kau?</p>
+        author:
+          type: string
+          description: Nama autor
+          example: Spongebob Squarepants
+        views:
+          type: integer
+          description: number of views
+          example: 4
+        created_at:
+          type: string
+          description: timestamp pembuatan. default format
+        updated_at:
+          type: string
+          description: timestamp update. default format
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

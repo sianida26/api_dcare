@@ -1,0 +1,30 @@
+_id: req_wrk_850437bbaee54a7492306ab96b8d2fb6743ba925
+type: Request
+parentId: fld_wrk_850437bbaee54a7492306ab96b8d2fb617693963
+modified: 1669646977434
+created: 1669646977434
+url: "{{ base_url }}/auth/register"
+name: API untuk mendaftar user baru
+description: ""
+method: POST
+body: {}
+parameters:
+  - name: name
+    disabled: false
+    value: Fulan bin Fulanah
+  - name: email
+    disabled: false
+    value: fulanbinfulanah@gmail.cok
+  - name: password
+    disabled: false
+    value: fulanbinfulanah123
+headers: []
+authentication: {}
+metaSortKey: -1669646977434
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

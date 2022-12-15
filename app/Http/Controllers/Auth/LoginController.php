@@ -4,14 +4,15 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Resources\AuthUserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
-    use CreateToken;
+    // use CreateToken;
 
-    public function index(LoginRequest $request): JsonResponse
+    public function index(LoginRequest $request)/* : JsonResponse */
     {
         if (! $this->ensureUserIsExist($request)) {
             return response()
@@ -20,14 +21,7 @@ class LoginController extends Controller
 
         $user = Auth::user();
 
-        $token = $this->createToken($user);
-
-        return response()
-        ->json([
-            'message' => 'Hi '.$user->name.', welcome to home',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-        ]);
+        return new AuthUserResource($user);
     }
 
     private function ensureUserIsExist(LoginRequest $request): bool

@@ -46,7 +46,7 @@ class ArticleController extends Controller
     public function show(Article $article)
     {
         $article->addViews();
-        
+
         return new ArticleResource($article);
     }
 

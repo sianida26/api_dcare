@@ -1,0 +1,164 @@
+_id: spc_aad961c76af640b385dbed7d4b08f1d0
+type: ApiSpec
+parentId: wrk_850437bbaee54a7492306ab96b8d2fb6
+modified: 1670301851525
+created: 1667224731963
+fileName: dcare.yaml
+contents: >-
+  openapi: 3.0.0
+
+  info:
+    description: "API Specification for D-Care Web Application"
+    version: 1.0.0
+    title: D-Care
+    contact:
+      email: developer@dcare.id
+    license:
+      name: Apache 2.0
+      url: http://www.apache.org/licenses/LICENSE-2.0.html
+  tags:
+    - name: authentication
+      description: Authentication related endpoints
+  paths:
+    /auth/login: 
+      post:
+        tags:
+          - authentication
+        summary: Login user ke sistem
+        description: ""
+        operationId: authLogin
+        parameters:
+          - name: email
+            in: query
+            description: Email user yang digunakan untuk login
+            required: true
+            schema:
+              type: string
+              example: fulanbinfulanah@gmail.com
+          - name: password
+            in: query
+            description: Password user dalam bentuk plaintext
+            required: true
+            schema:
+              type: string
+              example: fulanbinfulanah1234
+        responses:
+          "200":
+            description: Successful
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LoginResponse'
+          "400":
+            description: Response ketika username/password salah
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+    /auth/register: 
+      post:
+        tags:
+          - authentication
+        summary: API untuk mendaftar user baru
+        description: ""
+        operationId: authRegister
+        parameters:
+          - name: name
+            in: query
+            description: Nama lengkap user
+            required: true
+            schema:
+              type: string
+              example: Fulan bin Fulanah
+          - name: email
+            in: query
+            description: Email user
+            required: true
+            schema:
+              type: string
+              example: fulanbinfulanah@gmail.cok
+          - name: password
+            in: query
+            description: Password user dalam plaintext
+            required: true
+            schema:
+              type: string
+              example: fulanbinfulanah123
+        responses:
+          "200":
+            description: successful operation
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LoginResponse'
+                  
+          "422":
+            description: Form validation error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required: ['']
+                  properties:
+                    name:
+                      type: string
+                      description: 'Error ketika parameter "name" kosong atau lebih dari 255 karakter'
+                      example: 'Harus diisi'
+                    email:
+                      type: string
+                      description: 'Error ketika parameter "email" kosong, tidak valid, atau sudah terpakai.'
+                      example: 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.'
+                    password:
+                      type: string
+                      description: 'Error ketika parameter "password" kosong atau lebih kurang dari 8 karakter'
+                      example: 'Password minimal harus lebih dari 7 karakter!'
+  servers:
+    - url: https://api.dcare.id/v1/
+  components:
+    schemas:
+      LoginResponse:
+        type: object
+        properties:
+          name:
+            type: string
+            description: Nama lengkap user
+            example: 'Fulan bin Fulanah'
+          role:
+            type: string
+            description: "Role user"
+            example: user
+            enum:
+              - user
+              - admin
+              - developer
+          email:
+            type: string
+            description: Email user
+            example: 'fulanbinfulanah@gmail.com'
+          profilePicUrl:
+            type: string
+            description: 'alamat lengkap url'
+            example: 'https://my.storage.com/profilepic/wkwk.png'
+          accessToken:
+            type: string
+            example: 'dXNlckBleGFtcGxlLmNvbTpzZWNyZXQ='
+          refreshToken:
+            type: string
+            example: 'hdsfkjhdskjfksdhfkhsdf='
+      ApiResponse:
+        type: object
+        properties:
+          code:
+            type: integer
+            format: int32
+          type:
+            type: string
+          message:
+            type: string
+      ErrorResponse:
+        type: object
+        properties:
+          message:
+            type: string
+            example: 'Oops. sepertinya terjadi kesalahan'
+contentType: yaml

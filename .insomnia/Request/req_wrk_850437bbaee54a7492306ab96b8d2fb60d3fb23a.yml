@@ -1,0 +1,27 @@
+_id: req_wrk_850437bbaee54a7492306ab96b8d2fb60d3fb23a
+type: Request
+parentId: fld_wrk_850437bbaee54a7492306ab96b8d2fb617693963
+modified: 1669646977442
+created: 1669646977442
+url: "{{ base_url }}/auth/login"
+name: Login user ke sistem
+description: ""
+method: POST
+body: {}
+parameters:
+  - name: email
+    disabled: false
+    value: fulanbinfulanah@gmail.com
+  - name: password
+    disabled: false
+    value: fulanbinfulanah1234
+headers: []
+authentication: {}
+metaSortKey: -1669646977442
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

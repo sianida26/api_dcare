@@ -14,14 +14,14 @@ class RoleSeeder extends Seeder
      */
     public function run()
     {
-        Role::query()->upsert($this->generator(), 'name');
+        Role::query()->insert($this->generator());
     }
 
     private function generator(): array
     {
         $roles = collect([]);
 
-        foreach (Role::ROLES as $key => $role) {
+        foreach (Role::ROLES as $role) {
             $roles->push(['name' => $role]);
         }
 

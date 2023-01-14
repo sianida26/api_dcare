@@ -13,13 +13,15 @@ tags:
     description: Authentication related endpoints
   - name: Artikel
     description: Endpoint CRUD Artikel
+  - name: Donasi
+    description: Endpoint untuk fitur donasi
 paths:
   /auth/login: 
     post:
       tags:
         - authentication
       summary: Login user ke sistem
-      description: ""
+      description: Login user ke sistem
       operationId: authLogin
       requestBody:
         content:
@@ -54,7 +56,7 @@ paths:
       tags:
         - authentication
       summary: API untuk mendaftar user baru
-      description: ""
+      description: API untuk mendaftar user baru
       operationId: authRegister
       requestBody:
         content:
@@ -90,6 +92,7 @@ paths:
       tags:
         - Artikel
       summary: Ambil data semua artikel
+      description: Ambil data semua artikel
       security:
         - bearerAuth: []
       operationId: getArticles
@@ -131,6 +134,7 @@ paths:
       tags:
         - Artikel
       summary: Membuat artikel
+      description: API untuk membuat artikel
       security:
         - bearerAuth: []
       operationId: createArticle
@@ -165,6 +169,7 @@ paths:
       tags:
         - Artikel
       summary: Lihat detail artikel
+      description: API utnuk melihat detail artikel
       security:
         - bearerAuth: []
       operationId: getArticleById
@@ -190,6 +195,7 @@ paths:
       tags:
         - Artikel
       summary: Mengedit artikel
+      description: API untuk mengedit artikel
       security:
         - bearerAuth: []
       operationId: editArticle
@@ -232,6 +238,7 @@ paths:
       tags:
         - Artikel
       summary: Mengedit artikel
+      description: API untuk mengedit artikel
       security:
         - bearerAuth: []
       operationId: deleteArticle
@@ -249,9 +256,40 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         "404":
           $ref: '#/components/responses/NotFound'
+  /donation/giveDonation:
+    post:
+      tags:
+        - Donasi
+      summary: Buat donasi baru
+      description: API untuk membuat donasi baru dari pengunjung
+      operationId: createDonation
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Nama. boleh inisial
+                phone:
+                  type: string
+                  description: Nomor telpon. tidak harus sesuai format. bisa "-"
+                email:
+                  type: string
+                  description: Email. harus sesuai format
+                receiptPhoto:
+                  type: string
+                  format: binary
+                  description: Foto bukti transfer
+      responses:
+        "201":
+          $ref: '#/components/responses/MessageOnly'
+        "422":
+          $ref: '#/components/responses/FormError'
           
 servers:
-  - url: https://api.dcare.id/v1/
+  - url: https://api.dcare.id/v1
 components:
   responses:
     Unauthorized:
@@ -305,16 +343,6 @@ components:
         accessToken:
           type: string
           example: 'dXNlckBleGFtcGxlLmNvbTpzZWNyZXQ='
-    ApiResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          format: int32
-        type:
-          type: string
-        message:
-          type: string
     ErrorResponse:
       type: object
       properties:

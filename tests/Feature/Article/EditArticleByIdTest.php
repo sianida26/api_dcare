@@ -1,0 +1,257 @@
+<?php
+/**
+ * EditArticleByIdTest.php
+ * 
+ * Test cases for endpoint Edit Article By Id
+ * 
+ * @author Chesa NH <chesanurhidayat@gmail.com>
+ */
+
+namespace Tests\Feature;
+
+use App\Models\User;
+use App\Models\Article;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Testing\TestResponse;
+use Illuminate\Testing\Fluent\AssertableJson;
+use Tests\TestCase;
+
+class EditArticleByIdTest extends TestCase
+{
+
+    protected $user;
+    protected $article;
+    protected $token;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Create a test user and an article
+        Article::withoutEvents(function(){
+            $this->user = User::factory()
+                ->admin()
+                ->has(Article::factory()->count(1))
+                ->create();
+        });
+        $this->token = $this->user->createToken('auth_token')->plainTextToken;
+        $this->article = $this->user->articles->first();
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        // Delete created users
+        User::where('email', 'like', '%@example.%')->delete();
+    }
+
+    /**
+     * Send request to edit article
+     * 
+     * @param int $id
+     * @param string $title
+     * @param string $content
+     * @param UploadedFile|null $cover
+     * @return TestResponse
+     */
+    private function send(int $id, string $title, string $content, ?UploadedFile $cover = null): TestResponse
+    {
+        $data = [
+            'title' => $title,
+            'content' => $content,
+        ];
+
+        if ($cover) {
+            $data['cover'] = $cover;
+        }
+
+        return $this->withHeaders([
+                'Authorization' => 'Bearer ' . $this->token,
+            ])
+            ->putJson("/articles/$id", $data);
+    }
+
+    /**
+     * Test should success
+     * 
+     * @return void
+     */
+    public function testEditArticleByIdSuccess(): void
+    {
+        $cover = UploadedFile::fake()->image('cover.jpg');
+        Storage::fake('public');
+
+        // Send request to edit article
+        $response = $this->send($this->article->id, 'New Title', 'New Content', $cover);
+
+        // Assert that the request is successful
+        $response->assertSuccessful();
+
+        // Assert that the article is updated in the database
+        $this->assertDatabaseHas('articles', [
+            'id' => $this->article->id,
+            'title' => 'New Title',
+            'content' => 'New Content',
+            'author_id' => $this->user->id,
+        ]);
+
+        // Assert that the cover image is stored in storage
+        Storage::disk('public')->assertExists("covers/{$cover->hashName()}");
+
+        // Assert that the response contains the expected data
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->where('id', $this->article->id)
+                ->where('title', 'New Title')
+                ->where('content', 'New Content')
+                ->where('author', $this->user->name)
+                ->has('cover_url')
+                ->has('views')
+                ->has('created_at')
+                ->has('updated_at')
+        );
+    }
+
+    /**
+     * Test should return 401 if unauthorized
+     * 
+     * @return void
+     */
+    public function testEditArticleByIdUnauthorized(): void
+    {
+        // Send request without a token
+        $response = $this->putJson("/articles/{$this->article->id}", [
+            'title' => 'New Title',
+            'content' => 'New Content',
+        ]);
+
+        // Assert that the request returns a 401 status code
+        $response->assertUnauthorized();
+
+        // Assert that the article is not updated in the database
+        $this->assertDatabaseMissing('articles', [
+            'id' => $this->article->id,
+            'title' => 'New Title',
+            'content' => 'New Content',
+        ]);
+    }
+
+    /**
+     * Test should return 403 if article is not owned
+     * 
+     * @return void
+     */
+    public function testEditArticleByIdForbidden(): void
+    {
+        // Create a new user
+        $user = User::factory()->create();
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Send request with new user's token
+        $response = $this->withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])
+            ->putJson("/articles/{$this->article->id}", [
+                'title' => 'New Title',
+                'content' => 'New Content',
+            ]);
+
+        // Assert that the request returns a 403 status code
+        $response->assertForbidden();
+
+        // Assert that the article is not updated in the database
+        $this->assertDatabaseMissing('articles', [
+            'id' => $this->article->id,
+            'title' => 'New Title',
+            'content' => 'New Content',
+        ]);
+    }
+
+    /**
+    * Test should return 404 if article not found
+    *
+    * @return void
+    */
+    public function testEditArticleByIdNotFound(): void
+    {
+        // Send request to edit non-existing article
+        $response = $this->withHeaders([
+                'Authorization' => 'Bearer ' . $this->token,
+            ])
+            ->putJson("/articles/0", [
+                'title' => 'New Title',
+                'content' => 'New Content',
+                'cover' => $this->getTestFile(),
+            ]);
+
+        // Assert that the request returns a 404 status code
+        $response->assertStatus(404);
+
+        // Assert that the response contains the expected data
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->has('message', 'Artikel tidak ditemukan')
+        );
+    }
+
+    /**
+    * Test should return OK if cover is empty
+    *
+    * @return void
+    */
+    public function testEditArticleByIdCoverEmpty(): void
+    {
+        // Send request without cover
+        $response = $this->withHeaders([
+                'Authorization' => 'Bearer ' . $this->token,
+            ])
+            ->putJson("/articles/{$this->article->id}", [
+                'title' => 'New Title',
+                'content' => 'New Content',
+            ]);
+
+        // Assert that the request is successful
+        $response->assertSuccessful();
+
+        // Assert that the article is updated in the database
+        $this->assertDatabaseHas('articles', [
+            'id' => $this->article->id,
+            'title' => 'New Title',
+            'content' => 'New Content',
+        ]);
+
+        // Assert that the old cover is still in the storage
+        $this->assertTrue($this->storage->exists($this->article->cover));
+    }
+
+    /**
+     * Test should remove old image
+     * 
+     * @return void
+     */
+    public function testEditArticleByIdRemoveOldCover(): void
+    {
+        // Send request with new cover
+        $response = $this->withHeaders([
+                'Authorization' => 'Bearer ' . $this->token,
+            ])
+            ->putJson("/articles/{$this->article->id}", [
+                'title' => 'New Title',
+                'content' => 'New Content',
+                'cover' => $this->getTestFile(),
+            ]);
+
+        // Assert that the request is successful
+        $response->assertSuccessful();
+
+        // Assert that the article is updated in the database
+        $this->assertDatabaseHas('articles', [
+            'id' => $this->article->id,
+            'title' => 'New Title',
+            'content' => 'New Content',
+        ]);
+
+        // Assert that the old cover is removed from storage
+        $this->assertFalse($this->storage->exists($this->article->cover));
+    }
+}

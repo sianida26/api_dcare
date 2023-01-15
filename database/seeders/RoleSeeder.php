@@ -20,13 +20,11 @@ class RoleSeeder extends Seeder
     private function generator(): array
     {
         $roles = collect([]);
-        $count = 0;
 
         foreach (Role::ROLES as $role) {
             if (Role::where(['name' => $role])->exists()) continue; //prevent duplicates
 
             $roles->push(['name' => $role]);
-            $count++;
         }
 
         return $roles->toArray();

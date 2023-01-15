@@ -11,6 +11,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\Article;
+use App\Models\Role;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -118,7 +119,7 @@ class GetArticleByIdTest extends TestCase
     public function testGetArticleByIdSuccessWithDeveloperRole(): void
     {
         
-        $this->user->assignRole('developer');
+        $this->user->setRole(Role::firstWhere('name','developer'));
         $this->user->save();
 
         // Send request

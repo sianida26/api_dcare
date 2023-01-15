@@ -17,12 +17,14 @@ class LoginTest extends TestCase
         parent::setUp();
     }
 
-    protected function tearDown(): void
+    public static function tearDownAfterClass(): void
     {
-        //remove all generated users
-        DB::table('users')->where('email', 'like', '%@example.%')->delete();
+        (new self())->setUp();
 
-        parent::tearDown();
+        //remove generated users
+        User::where('email', 'like', '%@example.%')->delete();
+
+        parent::tearDownAfterClass();
     }
 
     /**

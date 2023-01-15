@@ -63,6 +63,9 @@ class RegisterTest extends TestCase
         // Assert that the sent user's data is exists in database
         $this->assertModelExists($user);
 
+        //Assert newly generated user has "user" role
+        $this->assertTrue($user->role->name === "user");
+
 
         // Assert that the response contains the expected data
         $response->assertJson(fn (AssertableJson $json) =>

@@ -44,7 +44,7 @@ class LoginTest extends TestCase
         ];
 
         // Send a login request
-        $response = $this->post('/v1/auth/login', $data);
+        $response = $this->post('/auth/login', $data);
 
         // Assert that the request was successful
         $response->assertStatus(200);
@@ -78,7 +78,7 @@ class LoginTest extends TestCase
         ];
 
         // Send a login request
-        $response = $this->post('/v1/auth/login', $data);
+        $response = $this->post('/auth/login', $data);
 
         // Assert that the request was successful
         $response->assertStatus(422);

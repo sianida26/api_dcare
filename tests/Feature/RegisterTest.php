@@ -34,7 +34,7 @@ class RegisterTest extends TestCase
      */
     private function send(string $name = '', string $email = '', string $password = ''): TestResponse
     {
-        return $this->post('/v1/auth/register', [
+        return $this->post('/auth/register', [
             'name' => $name,
             'email' => $email,
             'password' => $password,

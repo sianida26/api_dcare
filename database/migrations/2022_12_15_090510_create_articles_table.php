@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('cover_path')->nullable();
             $table->text('content')->nullable();
-            $table->foreignIdFor(User::class)->nullable()->constrained()->cascadeOnUpdate()->nullOnDelete();
+            $table->foreignIdFor(User::class)->nullable()->constrained()->cascadeOnUpdate()->cascadeOnDelete();
             $table->unsignedInteger('views')->default(0);
             $table->timestamps();
         });

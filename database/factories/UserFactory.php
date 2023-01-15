@@ -51,4 +51,11 @@ class UserFactory extends Factory
             'role_id' => $this->role(0),
         ]);
     }
+
+    public function developer()
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => $this->role(3),
+        ]);
+    }
 }

@@ -4,122 +4,324 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
 class RegisterTest extends TestCase
 {
-    use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->seed(RoleSeeder::class);
     }
 
-    private function posted(string $name = '', string $email = '', string $password = ''): TestResponse
+    public static function tearDownAfterClass(): void
     {
-        return $this->post(route('register'), [
+        (new self())->setUp();
+
+        //remove generated users
+        User::where('email', 'like', '%@example.%')->delete();
+
+        parent::tearDownAfterClass();
+    }
+
+    /**
+     * Send data to server
+     * 
+     * @return TestResponse
+     */
+    private function send(string $name = '', string $email = '', string $password = ''): TestResponse
+    {
+        return $this->post('/v1/auth/register', [
             'name' => $name,
             'email' => $email,
             'password' => $password,
         ]);
     }
 
-    public function test_register_is_successful(): void
+    /**
+     * Test successful registration
+     * 
+     * @return void
+     */
+    public function testRegisterSuccess(): void
     {
-        $response = $this->posted(
-            name: fake()->name(),
-            email: fake()->email(),
+        //Send register request
+        $response = $this->send(
+            name: 'coba user',
+            email: 'testing123@example.com',
             password: '@AxzcaS142'
         );
 
-        $response->assertStatus(201);
-    }
+        //Assert that the request is successful
+        $response->assertSuccessful();
 
-    public function test_register_without_name(): void
-    {
-        $response = $this->posted(
-            email: fake()->email(),
-            password: fake()->password(8)
+        $user = User::firstWhere('email', 'testing123@example.com');
+
+        // Assert that the sent user's data is exists in database
+        $this->assertModelExists($user);
+
+
+        // Assert that the response contains the expected data
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->where('data.name', $user->name)
+                ->where('data.role', $user->role->name)
+                ->where('data.email', $user->email)
+                ->where('data.profilePicUrl', $user->getProfilePicUrlAttribute())
+                ->has('data.accessToken')
         );
-
-        $response->assertStatus(422)
-        ->assertJsonPath('errors.name.0', 'The name field is required.');
     }
 
-    public function test_register_with_longer_name(): void
+    /**
+     * Test if email already exists 
+     * 
+     * @return void
+     */
+    public function testEmailAlreadyExists(): void
     {
-        $response = $this->posted(
-            name: Str::random(256),
-            email: fake()->email(),
+
+        $user = User::firstWhere('email', 'testing123@example.com');
+        $this->assertModelExists($user);
+
+        //Send register request
+        $response = $this->send(
+            name: 'coba user',
+            email: 'testing123@example.com',
             password: '@AxzcaS142'
         );
 
-        $response->assertStatus(422)
-        ->assertJsonPath('errors.name.0', 'The name must not be greater than 255 characters.');
+        //Assert that the request is 422
+        $response->assertStatus(422);
+
+        // Assert that the response contains the expected data
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn($json) => 
+                    $json->has('email', 'Email ini sudah terdaftar!')
+                        ->etc()
+                )
+        );
+
+        // Assert that the sent user data is not created twice in database
+        $this->assertEquals(1, User::where('email','testing123@example.com')->count());
     }
 
-    public function test_register_without_email(): void
+    /**
+     * Test if name is empty 
+     * 
+     * @return void
+     */
+    public function testNameEmpty(): void
     {
-        $response = $this->posted(
-            name: fake()->name(),
+        //Send register request
+        $response = $this->send(
+            name: '',
+            email: 'testnameempty@example.com',
             password: '@AxzcaS142'
         );
 
-        $response->assertStatus(422)
-        ->assertJsonPath('errors.email.0', 'The email field is required.');
+        //Assert that the request is 422
+        $response->assertStatus(422);
+
+        // Assert that the response contains the expected data
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn($json) => 
+                    $json->has('name', 'Harus diisi')
+                        ->etc()
+                )
+        );
+
+        // Assert that the sent user data is not created in database
+        $this->assertDatabaseMissing('users', ['email' => 'testnameempty@example.com']);
     }
 
-    public function test_register_with_wrong_email_format(): void
+    /**
+     * Test if email is empty 
+     * 
+     * @return void
+     */
+    public function testEmailEmpty(): void
     {
-        $response = $this->posted(
-            name: fake()->name(),
-            email: fake()->name(),
+        //Send register request
+        $response = $this->send(
+            name: 'ahdflkadfjlkdfhjlasdf',
+            email: '',
             password: '@AxzcaS142'
         );
 
-        $response->assertStatus(422)
-        ->assertJsonPath('errors.email.0', 'The email must be a valid email address.');
+        //Assert that the request is 422
+        $response->assertStatus(422);
+
+        // Assert that the response contains the expected data
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn($json) => 
+                    $json->has('email', 'Harus diisi')
+                        ->etc()
+                )
+        );
+
+        // Assert that the sent user data is not created in database
+        $this->assertDatabaseMissing('users', ['name' => 'ahdflkadfjlkdfhjlasdf']);
     }
 
-    public function test_register_with_duplicated_email(): void
+    /**
+     * Test if name is empty 
+     * 
+     * @return void
+     */
+    public function testPasswordEmpty(): void
     {
-        $this->test_register_is_successful();
-
-        $user = User::query()->first();
-
-        $response = $this->posted(
+        //Send register request
+        $response = $this->send(
             name: fake()->name(),
-            email: $user->email,
+            email: 'testpasswordempty@example.com',
+            password: ''
+        );
+
+        //Assert that the request is 422
+        $response->assertStatus(422);
+
+        // Assert that the response contains the expected data
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn($json) => 
+                    $json->has('password', 'Harus diisi')
+                        ->etc()
+                )
+        );
+
+        // Assert that the sent user data is not created in database
+        $this->assertDatabaseMissing('users', ['email' => 'testpasswordempty@example.com']);
+    }
+
+    /**
+     * Test if name is more that 255 characters 
+     * 
+     * @return void
+     */
+    public function testNameMoreThan255Characters(): void
+    {
+        //Send register request
+        $response = $this->send(
+            name: fake()->regexify('\w{256}'),
+            email: 'testnamelong@example.com',
             password: '@AxzcaS142'
         );
 
-        $response->assertStatus(422)
-        ->assertJsonPath('errors.email.0', 'The email has already been taken.');
-    }
+        //Assert that the request is 422
+        $response->assertStatus(422);
 
-    public function test_register_invalid_password(): void
-    {
-        $response = $this->posted(
-            name: fake()->name(),
-            email: fake()->email(),
-            password: 'aaaaaa'
+        // Assert that the response contains the expected data
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn($json) => 
+                    $json->has('name', 'Maksimal 255 karakter')
+                        ->etc()
+                )
         );
 
-        $response->assertStatus(422)
-        ->assertJsonFragment([
-            'errors' => [
-                'password' => [
-                    'The password must be at least 8 characters.',
-                    'The password must contain at least one uppercase and one lowercase letter.',
-                    'The password must contain at least one symbol.',
-                    'The password must contain at least one number.',
-                ],
-            ],
-        ]);
+        // Assert that the sent user data is not created in database
+        $this->assertDatabaseMissing('users', ['email' => 'testnamelong@example.com']);
+    }
+
+    /**
+     * Test if email is not valid 
+     * 
+     * @return void
+     */
+    public function testEmailInvalid(): void
+    {
+        //Send register request
+        $response = $this->send(
+            name: fake()->name(),
+            email: 'fjsdlfd',
+            password: '@AxzcaS142'
+        );
+
+        //Assert that the request is 422
+        $response->assertStatus(422);
+
+        // Assert that the response contains the expected data
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn($json) => 
+                    $json->has('email', 'Email tidak sesuai format')
+                        ->etc()
+                )
+        );
+
+        // Assert that the sent user data is not created in database
+        $this->assertDatabaseMissing('users', ['email' => 'fjsdlfd']);
+    }
+
+    /**
+     * Test if email is more that 255 characters 
+     * 
+     * @return void
+     */
+    public function testEmailTooLong(): void
+    {
+
+        //Generate random long email address
+        $longEmail = fake()->regexify('\w{255}@example.com');
+
+        //Send register request
+        $response = $this->send(
+            name: fake()->name(),
+            email: $longEmail,
+            password: '@AxzcaS142'
+        );
+
+        //Assert that the request is 422
+        $response->assertStatus(422);
+
+        // Assert that the response contains the expected data
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn($json) => 
+                    $json->has('email', 'Maksimal 255 karakter')
+                        ->etc()
+                )
+        );
+
+        // Assert that the sent user data is not created in database
+        $this->assertDatabaseMissing('users', ['email' => $longEmail]);
+    }
+
+    /**
+     * Test if name is less than 8 characters
+     * 
+     * @return void
+     */
+    public function testPasswordIsTooShort(): void
+    {
+
+        $email = fake()->safeEmail();
+
+        //Send register request
+        $response = $this->send(
+            name: fake()->name(),
+            email: $email,
+            password: 'abc'
+        );
+
+        //Assert that the request is 422
+        $response->assertStatus(422);
+
+        // Assert that the response contains the expected data
+        $response->assertJson(fn (AssertableJson $json) =>
+            $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn($json) => 
+                    $json->has('password', 'Password minimal 8 karakter')
+                        ->etc()
+                )
+        );
+
+        // Assert that the sent user data is not created in database
+        $this->assertDatabaseMissing('users', ['email' => $email]);
     }
 }

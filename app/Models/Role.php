@@ -6,6 +6,7 @@ use ErrorException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Role extends Model
 {
@@ -24,5 +25,15 @@ class Role extends Model
         }
 
         return $query->where('name', self::ROLES[$order]);
+    }
+
+    /**
+     * Get all of the users for the Role
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
     }
 }

@@ -3,14 +3,14 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
-use Illuminate\Support\Str;
-use Illuminate\Testing\TestResponse;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class RegisterTest extends TestCase
 {
+    use RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -29,7 +29,7 @@ class RegisterTest extends TestCase
 
     /**
      * Send data to server
-     * 
+     *
      * @return TestResponse
      */
     private function send(string $name = '', string $email = '', string $password = ''): TestResponse
@@ -43,7 +43,7 @@ class RegisterTest extends TestCase
 
     /**
      * Test successful registration
-     * 
+     *
      * @return void
      */
     public function testRegisterSuccess(): void
@@ -64,12 +64,10 @@ class RegisterTest extends TestCase
         $this->assertModelExists($user);
 
         //Assert newly generated user has "user" role
-        $this->assertTrue($user->role->name === "user");
-
+        $this->assertTrue($user->role->name === 'user');
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->where('data.name', $user->name)
+        $response->assertJson(fn (AssertableJson $json) => $json->where('data.name', $user->name)
                 ->where('data.role', $user->role->name)
                 ->where('data.email', $user->email)
                 ->where('data.profilePicUrl', $user->getProfilePicUrlAttribute())
@@ -78,13 +76,12 @@ class RegisterTest extends TestCase
     }
 
     /**
-     * Test if email already exists 
-     * 
+     * Test if email already exists
+     *
      * @return void
      */
     public function testEmailAlreadyExists(): void
     {
-
         $user = User::firstWhere('email', 'testing123@example.com');
         $this->assertModelExists($user);
 
@@ -99,21 +96,19 @@ class RegisterTest extends TestCase
         $response->assertStatus(422);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn($json) => 
-                    $json->has('email', 'Email ini sudah terdaftar!')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn ($json) => $json->has('email', 'Email ini sudah terdaftar!')
                         ->etc()
                 )
         );
 
         // Assert that the sent user data is not created twice in database
-        $this->assertEquals(1, User::where('email','testing123@example.com')->count());
+        $this->assertEquals(1, User::where('email', 'testing123@example.com')->count());
     }
 
     /**
-     * Test if name is empty 
-     * 
+     * Test if name is empty
+     *
      * @return void
      */
     public function testNameEmpty(): void
@@ -129,10 +124,8 @@ class RegisterTest extends TestCase
         $response->assertStatus(422);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn($json) => 
-                    $json->has('name', 'Harus diisi')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn ($json) => $json->has('name', 'Harus diisi')
                         ->etc()
                 )
         );
@@ -142,8 +135,8 @@ class RegisterTest extends TestCase
     }
 
     /**
-     * Test if email is empty 
-     * 
+     * Test if email is empty
+     *
      * @return void
      */
     public function testEmailEmpty(): void
@@ -159,10 +152,8 @@ class RegisterTest extends TestCase
         $response->assertStatus(422);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn($json) => 
-                    $json->has('email', 'Harus diisi')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn ($json) => $json->has('email', 'Harus diisi')
                         ->etc()
                 )
         );
@@ -172,8 +163,8 @@ class RegisterTest extends TestCase
     }
 
     /**
-     * Test if name is empty 
-     * 
+     * Test if name is empty
+     *
      * @return void
      */
     public function testPasswordEmpty(): void
@@ -189,10 +180,8 @@ class RegisterTest extends TestCase
         $response->assertStatus(422);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn($json) => 
-                    $json->has('password', 'Harus diisi')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn ($json) => $json->has('password', 'Harus diisi')
                         ->etc()
                 )
         );
@@ -202,8 +191,8 @@ class RegisterTest extends TestCase
     }
 
     /**
-     * Test if name is more that 255 characters 
-     * 
+     * Test if name is more that 255 characters
+     *
      * @return void
      */
     public function testNameMoreThan255Characters(): void
@@ -219,10 +208,8 @@ class RegisterTest extends TestCase
         $response->assertStatus(422);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn($json) => 
-                    $json->has('name', 'Maksimal 255 karakter')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn ($json) => $json->has('name', 'Maksimal 255 karakter')
                         ->etc()
                 )
         );
@@ -232,8 +219,8 @@ class RegisterTest extends TestCase
     }
 
     /**
-     * Test if email is not valid 
-     * 
+     * Test if email is not valid
+     *
      * @return void
      */
     public function testEmailInvalid(): void
@@ -249,10 +236,8 @@ class RegisterTest extends TestCase
         $response->assertStatus(422);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn($json) => 
-                    $json->has('email', 'Email tidak sesuai format')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn ($json) => $json->has('email', 'Email tidak sesuai format')
                         ->etc()
                 )
         );
@@ -262,13 +247,12 @@ class RegisterTest extends TestCase
     }
 
     /**
-     * Test if email is more that 255 characters 
-     * 
+     * Test if email is more that 255 characters
+     *
      * @return void
      */
     public function testEmailTooLong(): void
     {
-
         //Generate random long email address
         $longEmail = fake()->regexify('\w{255}@example.com');
 
@@ -283,10 +267,8 @@ class RegisterTest extends TestCase
         $response->assertStatus(422);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn($json) => 
-                    $json->has('email', 'Maksimal 255 karakter')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn ($json) => $json->has('email', 'Maksimal 255 karakter')
                         ->etc()
                 )
         );
@@ -297,12 +279,11 @@ class RegisterTest extends TestCase
 
     /**
      * Test if name is less than 8 characters
-     * 
+     *
      * @return void
      */
     public function testPasswordIsTooShort(): void
     {
-
         $email = fake()->safeEmail();
 
         //Send register request
@@ -316,10 +297,8 @@ class RegisterTest extends TestCase
         $response->assertStatus(422);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn($json) => 
-                    $json->has('password', 'Password minimal 8 karakter')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn ($json) => $json->has('password', 'Password minimal 8 karakter')
                         ->etc()
                 )
         );

@@ -15,7 +15,7 @@ class Role extends Model
     public const ROLES = [
         'admin',
         'user',
-        'developer'
+        'developer',
     ];
 
     public function scopeRole(Builder $query, int $order): Builder

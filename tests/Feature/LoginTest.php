@@ -3,14 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class LoginTest extends TestCase
 {
+    use RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -52,8 +51,7 @@ class LoginTest extends TestCase
         $response->assertStatus(200);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->where('name', $user->name)
+        $response->assertJson(fn (AssertableJson $json) => $json->where('name', $user->name)
                 ->where('role', $user->role->name)
                 ->where('email', $user->email)
                 ->where('profilePicUrl', $user->getProfilePicUrlAttribute())
@@ -86,8 +84,7 @@ class LoginTest extends TestCase
         $response->assertStatus(422);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->where('message', 'Username atau password salah!')
+        $response->assertJson(fn (AssertableJson $json) => $json->where('message', 'Username atau password salah!')
         );
 
         // Assert that the user is not logged in

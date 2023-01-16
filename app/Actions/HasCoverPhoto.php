@@ -18,7 +18,7 @@ trait HasCoverPhoto
         tap($this->cover_path, function ($previous) use ($photo) {
             $this->forceFill([
                 'cover_path' => $photo->storePublicly(
-                    'cover-photos', ['disk' => $this->coverPhotoDisk()]
+                    'covers', ['disk' => $this->coverPhotoDisk()]
                 ),
             ])->save();
 

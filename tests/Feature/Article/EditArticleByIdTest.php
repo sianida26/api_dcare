@@ -1,28 +1,33 @@
 <?php
 /**
  * EditArticleByIdTest.php
- * 
+ *
  * Test cases for endpoint Edit Article By Id
- * 
+ *
  * @author Chesa NH <chesanurhidayat@gmail.com>
  */
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Article;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Testing\TestResponse;
 use Illuminate\Testing\Fluent\AssertableJson;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class EditArticleByIdTest extends TestCase
 {
+    use RefreshDatabase;
 
     protected $user;
+
     protected $article;
+
     protected $token;
+
     protected $file;
 
     protected function setUp(): void
@@ -30,7 +35,7 @@ class EditArticleByIdTest extends TestCase
         parent::setUp();
 
         // Create a test user and an article
-        Article::withoutEvents(function(){
+        Article::withoutEvents(function () {
             $this->user = User::factory()
                 ->admin()
                 ->has(Article::factory()->count(1))
@@ -47,17 +52,17 @@ class EditArticleByIdTest extends TestCase
     {
         // Delete created users
         User::where('email', 'like', '%@example.%')->delete();
-        
+
         parent::tearDown();
     }
 
     /**
      * Send request to edit article
-     * 
-     * @param int $id
-     * @param string $title
-     * @param string $content
-     * @param UploadedFile|null $cover
+     *
+     * @param  int  $id
+     * @param  string  $title
+     * @param  string  $content
+     * @param  UploadedFile|null  $cover
      * @return TestResponse
      */
     private function send(int $id, string $title, string $content, ?UploadedFile $cover = null): TestResponse
@@ -72,14 +77,14 @@ class EditArticleByIdTest extends TestCase
         }
 
         return $this->withHeaders([
-                'Authorization' => 'Bearer ' . $this->token,
-            ])
+            'Authorization' => 'Bearer '.$this->token,
+        ])
             ->putJson("/articles/$id", $data);
     }
 
     /**
      * Test should success
-     * 
+     *
      * @return void
      */
     public function testEditArticleByIdSuccess(): void
@@ -105,8 +110,7 @@ class EditArticleByIdTest extends TestCase
         Storage::disk('public')->assertExists("covers/{$cover->hashName()}");
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->where('id', $this->article->id)
+        $response->assertJson(fn (AssertableJson $json) => $json->where('id', $this->article->id)
                 ->where('title', 'New Title')
                 ->where('content', 'New Content')
                 ->where('author', $this->user->name)
@@ -119,7 +123,7 @@ class EditArticleByIdTest extends TestCase
 
     /**
      * Test should return 401 if unauthorized
-     * 
+     *
      * @return void
      */
     public function testEditArticleByIdUnauthorized(): void
@@ -143,7 +147,7 @@ class EditArticleByIdTest extends TestCase
 
     /**
      * Test should return 403 if article is not owned
-     * 
+     *
      * @return void
      */
     public function testEditArticleByIdForbidden(): void
@@ -154,8 +158,8 @@ class EditArticleByIdTest extends TestCase
 
         // Send request with new user's token
         $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-            ])
+            'Authorization' => 'Bearer '.$token,
+        ])
             ->putJson("/articles/{$this->article->id}", [
                 'title' => 'New Title',
                 'content' => 'New Content',
@@ -173,17 +177,17 @@ class EditArticleByIdTest extends TestCase
     }
 
     /**
-    * Test should return 404 if article not found
-    *
-    * @return void
-    */
+     * Test should return 404 if article not found
+     *
+     * @return void
+     */
     public function testEditArticleByIdNotFound(): void
     {
         // Send request to edit non-existing article
         $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $this->token,
-            ])
-            ->putJson("/articles/0", [
+            'Authorization' => 'Bearer '.$this->token,
+        ])
+            ->putJson('/articles/0', [
                 'title' => 'New Title',
                 'content' => 'New Content',
                 'cover' => $this->file,
@@ -193,22 +197,21 @@ class EditArticleByIdTest extends TestCase
         $response->assertStatus(404);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->where('message', 'Artikel tidak ditemukan')
+        $response->assertJson(fn (AssertableJson $json) => $json->where('message', 'Artikel tidak ditemukan')
         );
     }
 
     /**
-    * Test should return OK if cover is empty
-    *
-    * @return void
-    */
+     * Test should return OK if cover is empty
+     *
+     * @return void
+     */
     public function testEditArticleByIdCoverEmpty(): void
     {
         // Send request without cover
         $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $this->token,
-            ])
+            'Authorization' => 'Bearer '.$this->token,
+        ])
             ->putJson("/articles/{$this->article->id}", [
                 'title' => 'New Title',
                 'content' => 'New Content',
@@ -225,20 +228,20 @@ class EditArticleByIdTest extends TestCase
         ]);
 
         // Assert that the old cover is still in the storage
-        Storage::disk('public')->exists("covers/".$this->article->cover);
+        Storage::disk('public')->exists('covers/'.$this->article->cover);
     }
 
     /**
      * Test should remove old image
-     * 
+     *
      * @return void
      */
     public function testEditArticleByIdRemoveOldCover(): void
     {
         // Send request with new cover
         $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $this->token,
-            ])
+            'Authorization' => 'Bearer '.$this->token,
+        ])
             ->putJson("/articles/{$this->article->id}", [
                 'title' => 'New Title',
                 'content' => 'New Content',

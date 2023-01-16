@@ -19,7 +19,7 @@ class ArticleFactory extends Factory
     {
         return [
             'title' => fake()->sentence(),
-            'cover_path' => '/articles/cover-' . fake()->word(),
+            'cover_path' => '/articles/cover-'.fake()->word(),
             'content' => fake()->randomHtml(),
             'views' => 0,
             'user_id' => User::factory(),

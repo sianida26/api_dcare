@@ -1,28 +1,30 @@
 <?php
 /**
  * CreateArticleTest.php
- * 
+ *
  * Test cases for endpoint Create Article
- * 
+ *
  * @author Chesa NH <chesanurhidayat@gmail.com>
  */
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Article;
-use Database\Seeders\RoleSeeder;
-use Illuminate\Support\Str;
-use Illuminate\Testing\TestResponse;
-use Illuminate\Testing\Fluent\AssertableJson;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
 class CreateArticleTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected $user = null;
+
     protected $token = '';
+
     protected $file = null;
 
     protected function setUp(): void
@@ -47,17 +49,17 @@ class CreateArticleTest extends TestCase
 
     /**
      * Test successful article creation
-     * 
+     *
      * @return void
      */
     public function testCreateArticleSuccess(): void
     {
         // Send request
-        $response = $this->withHeaders(['Authorization' => 'Bearer '. $this->token])
-            ->post('/api/articles', [
+        $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
+            ->post('/articles', [
                 'title' => 'Test Article Title',
                 'content' => '<p>Test Article Content</p>',
-                'cover' => $this->file
+                'cover' => $this->file,
             ]);
 
         // Assert that the request is successful
@@ -67,7 +69,7 @@ class CreateArticleTest extends TestCase
         $this->assertDatabaseHas('articles', [
             'title' => 'Test Article Title',
             'content' => '<p>Test Article Content</p>',
-            'user_id' => $this->user->id
+            'user_id' => $this->user->id,
         ]);
 
         // Assert that the cover image is stored in the storage
@@ -76,7 +78,7 @@ class CreateArticleTest extends TestCase
 
     /**
      * Test forbidden if not admin or developer role
-     * 
+     *
      * @return void
      */
     public function testCreateArticleForbidden(): void
@@ -86,45 +88,43 @@ class CreateArticleTest extends TestCase
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Send request
-        $response = $this->withHeaders(['Authorization' => 'Bearer '. $token])
-            ->post('/api/articles', [
+        $response = $this->withHeaders(['Authorization' => 'Bearer '.$token])
+            ->post('/articles', [
                 'title' => 'Test Article Title',
                 'content' => '<p>Test Article Content</p>',
-                'cover' => $this->file
+                'cover' => $this->file,
             ]);
 
         // Assert that the request is forbidden
         $response->assertForbidden();
-        
+
         // Assert data should not exists in database
         $this->assertDatabaseMissing('articles', [
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ]);
     }
 
     /**
      * Test title validation
-     * 
+     *
      * @return void
      */
     public function testCreateArticleTitleValidation(): void
     {
         // Send request with empty title
-        $response = $this->withHeaders(['Authorization' => 'Bearer '. $this->token])
-            ->post('/api/articles', [
+        $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
+            ->post('/articles', [
                 'title' => '',
                 'content' => '<p>Test Article Content</p>',
-                'cover' => $this->file
+                'cover' => $this->file,
             ]);
 
         // Assert that the request returns a 422 status code
         $response->assertUnprocessable();
 
         // Assert that the response contains the expected error message
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn($json) => 
-                    $json->has('title', 'Harus diisi')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn ($json) => $json->has('title', 'Harus diisi')
                         ->etc()
                 )
         );
@@ -132,27 +132,25 @@ class CreateArticleTest extends TestCase
 
     /**
      * Test content validation
-     * 
+     *
      * @return void
      */
     public function testCreateArticleContentValidation(): void
     {
         // Send request with empty content
-        $response = $this->withHeaders(['Authorization' => 'Bearer '. $this->token])
-            ->post('/api/articles', [
+        $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
+            ->post('/articles', [
                 'title' => 'Test Article Title',
                 'content' => '',
-                'cover' => $this->file
+                'cover' => $this->file,
             ]);
 
         // Assert that the request returns a 422 status code
         $response->assertStatus(422);
 
         // Assert that the response contains the expected error message
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn($json) => 
-                    $json->has('content', 'Harus diisi')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
+                ->has('errors', fn ($json) => $json->has('content', 'Harus diisi')
                         ->etc()
                 )
         );
@@ -160,14 +158,14 @@ class CreateArticleTest extends TestCase
 
     /**
      * Test cover validation
-     * 
+     *
      * @return void
      */
     /* public function testCreateArticleCoverValidation(): void
     {
         // Send request without cover
         $response = $this->withHeaders(['Authorization' => 'Bearer '. $this->token])
-            ->post('/api/articles', [
+            ->post('/articles', [
                 'title' => 'Test Article Title',
                 'content' => '<p>Test Article Content</p>',
             ]);

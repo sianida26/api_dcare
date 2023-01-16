@@ -1,27 +1,29 @@
 <?php
 /**
  * DeleteArticleTest.php
- * 
+ *
  * Test cases for endpoint Delete Article By Id
- * 
+ *
  * @author Chesa NH <chesanurhidayat@gmail.com>
  */
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Article;
 use App\Models\Role;
-use Database\Seeders\RoleSeeder;
-use Illuminate\Support\Str;
-use Illuminate\Testing\TestResponse;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
 class DeleteArticleTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected $user = null;
+
     protected $token = '';
+
     protected $article = null;
 
     public static function setUpBeforeClass(): void
@@ -34,7 +36,7 @@ class DeleteArticleTest extends TestCase
         parent::setUp();
 
         // Create a test user and an article
-        Article::withoutEvents(function(){
+        Article::withoutEvents(function () {
             $this->user = User::factory()
                 ->admin()
                 ->has(Article::factory())
@@ -58,18 +60,18 @@ class DeleteArticleTest extends TestCase
         parent::tearDownAfterClass();
     }
 
-     /**
+    /**
      * Test successful delete article
-     * 
+     *
      * @return void
      */
     public function testDeleteArticleSuccess(): void
     {
         // Send request to delete article
         $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $this->token,
-            ])
-            ->delete("/articles/" . $this->article->id);
+            'Authorization' => 'Bearer '.$this->token,
+        ])
+            ->delete('/articles/'.$this->article->id);
 
         // Assert that the request is successful
         $response->assertSuccessful();
@@ -78,28 +80,27 @@ class DeleteArticleTest extends TestCase
         $this->assertModelMissing($this->article);
     }
 
-     /**
+    /**
      * Test should return 401 if unauthorized
-     * 
+     *
      * @return void
      */
     public function testDeleteArticleUnauthorized(): void
     {
         // Send request without token
-        $response = $this->delete("/articles/" . $this->article->id);
+        $response = $this->delete('/articles/'.$this->article->id);
 
         // Assert that the request returns a 401 status code
         $response->assertStatus(401);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Unauthenticated')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Unauthenticated')
         );
     }
 
     /**
      * Test should return 403 if article is not owned
-     * 
+     *
      * @return void
      */
     public function testDeleteNotOwnedArticle(): void
@@ -110,44 +111,42 @@ class DeleteArticleTest extends TestCase
 
         // Send request to delete article not owned by the user
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $otherUserToken,
+            'Authorization' => 'Bearer '.$otherUserToken,
         ])
-        ->delete("/articles/".$this->article->id);
+        ->delete('/articles/'.$this->article->id);
 
         // Assert that the request returns a 403 status code
         $response->assertStatus(403);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Anda tidak memiliki akses untuk menghapus artikel ini')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Anda tidak memiliki akses untuk menghapus artikel ini')
         );
     }
 
     /**
      * Test should return 404 if article not found
-     * 
+     *
      * @return void
      */
     public function testDeleteArticleNotFound(): void
     {
         // Send request to delete non-existing article
         $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $this->token,
-            ])
-            ->delete("/articles/0");
+            'Authorization' => 'Bearer '.$this->token,
+        ])
+            ->delete('/articles/0');
 
         // Assert that the request returns a 404 status code
         $response->assertStatus(404);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Artikel tidak ditemukan')
+        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Artikel tidak ditemukan')
         );
     }
 
     /**
      * Test should OK if delete not owned articles if has role "developer"
-     * 
+     *
      * @return void
      */
     public function testDeleteNotOwnedArticlesAsDeveloper(): void
@@ -158,9 +157,9 @@ class DeleteArticleTest extends TestCase
 
         // Send request to delete article not owned by the user
         $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $developerToken,
-            ])
-            ->delete("/articles/" . $this->article->id);
+            'Authorization' => 'Bearer '.$developerToken,
+        ])
+            ->delete('/articles/'.$this->article->id);
 
         // Assert that the request is successful
         $response->assertSuccessful();

@@ -22,7 +22,9 @@ class RoleSeeder extends Seeder
         $roles = collect([]);
 
         foreach (Role::ROLES as $role) {
-            if (Role::where(['name' => $role])->exists()) continue; //prevent duplicates
+            if (Role::where(['name' => $role])->exists()) {
+                continue;
+            } //prevent duplicates
 
             $roles->push(['name' => $role]);
         }

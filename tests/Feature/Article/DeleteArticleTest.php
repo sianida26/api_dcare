@@ -69,7 +69,7 @@ class DeleteArticleTest extends TestCase
         $response = $this->withHeaders([
                 'Authorization' => 'Bearer ' . $this->token,
             ])
-            ->delete("/api/articles/" . $this->article->id);
+            ->delete("/articles/" . $this->article->id);
 
         // Assert that the request is successful
         $response->assertSuccessful();
@@ -86,7 +86,7 @@ class DeleteArticleTest extends TestCase
     public function testDeleteArticleUnauthorized(): void
     {
         // Send request without token
-        $response = $this->delete("/api/articles/" . $this->article->id);
+        $response = $this->delete("/articles/" . $this->article->id);
 
         // Assert that the request returns a 401 status code
         $response->assertStatus(401);
@@ -112,7 +112,7 @@ class DeleteArticleTest extends TestCase
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $otherUserToken,
         ])
-        ->delete("/api/articles/".$this->article->id);
+        ->delete("/articles/".$this->article->id);
 
         // Assert that the request returns a 403 status code
         $response->assertStatus(403);
@@ -134,7 +134,7 @@ class DeleteArticleTest extends TestCase
         $response = $this->withHeaders([
                 'Authorization' => 'Bearer ' . $this->token,
             ])
-            ->delete("/api/articles/0");
+            ->delete("/articles/0");
 
         // Assert that the request returns a 404 status code
         $response->assertStatus(404);
@@ -160,7 +160,7 @@ class DeleteArticleTest extends TestCase
         $response = $this->withHeaders([
                 'Authorization' => 'Bearer ' . $developerToken,
             ])
-            ->delete("/api/articles/" . $this->article->id);
+            ->delete("/articles/" . $this->article->id);
 
         // Assert that the request is successful
         $response->assertSuccessful();

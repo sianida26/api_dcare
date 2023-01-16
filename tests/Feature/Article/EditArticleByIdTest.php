@@ -23,6 +23,7 @@ class EditArticleByIdTest extends TestCase
     protected $user;
     protected $article;
     protected $token;
+    protected $file;
 
     protected function setUp(): void
     {
@@ -37,14 +38,17 @@ class EditArticleByIdTest extends TestCase
         });
         $this->token = $this->user->createToken('auth_token')->plainTextToken;
         $this->article = $this->user->articles->first();
+
+        // Create a test file for cover
+        $this->file = UploadedFile::fake()->image('cover.jpg');
     }
 
     protected function tearDown(): void
     {
-        parent::tearDown();
-
         // Delete created users
         User::where('email', 'like', '%@example.%')->delete();
+        
+        parent::tearDown();
     }
 
     /**
@@ -94,7 +98,7 @@ class EditArticleByIdTest extends TestCase
             'id' => $this->article->id,
             'title' => 'New Title',
             'content' => 'New Content',
-            'author_id' => $this->user->id,
+            'user_id' => $this->user->id,
         ]);
 
         // Assert that the cover image is stored in storage
@@ -182,7 +186,7 @@ class EditArticleByIdTest extends TestCase
             ->putJson("/articles/0", [
                 'title' => 'New Title',
                 'content' => 'New Content',
-                'cover' => $this->getTestFile(),
+                'cover' => $this->file,
             ]);
 
         // Assert that the request returns a 404 status code
@@ -190,7 +194,7 @@ class EditArticleByIdTest extends TestCase
 
         // Assert that the response contains the expected data
         $response->assertJson(fn (AssertableJson $json) =>
-            $json->has('message', 'Artikel tidak ditemukan')
+            $json->where('message', 'Artikel tidak ditemukan')
         );
     }
 
@@ -221,7 +225,7 @@ class EditArticleByIdTest extends TestCase
         ]);
 
         // Assert that the old cover is still in the storage
-        $this->assertTrue($this->storage->exists($this->article->cover));
+        Storage::disk('public')->exists("covers/".$this->article->cover);
     }
 
     /**
@@ -238,7 +242,7 @@ class EditArticleByIdTest extends TestCase
             ->putJson("/articles/{$this->article->id}", [
                 'title' => 'New Title',
                 'content' => 'New Content',
-                'cover' => $this->getTestFile(),
+                'cover' => $this->file,
             ]);
 
         // Assert that the request is successful
@@ -252,6 +256,6 @@ class EditArticleByIdTest extends TestCase
         ]);
 
         // Assert that the old cover is removed from storage
-        $this->assertFalse($this->storage->exists($this->article->cover));
+        Storage::disk('public')->assertMissing($this->article->cover);
     }
 }

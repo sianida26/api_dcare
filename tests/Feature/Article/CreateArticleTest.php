@@ -54,7 +54,7 @@ class CreateArticleTest extends TestCase
     {
         // Send request
         $response = $this->withHeaders(['Authorization' => 'Bearer '. $this->token])
-            ->post('/api/articles', [
+            ->post('/articles', [
                 'title' => 'Test Article Title',
                 'content' => '<p>Test Article Content</p>',
                 'cover' => $this->file
@@ -87,7 +87,7 @@ class CreateArticleTest extends TestCase
 
         // Send request
         $response = $this->withHeaders(['Authorization' => 'Bearer '. $token])
-            ->post('/api/articles', [
+            ->post('/articles', [
                 'title' => 'Test Article Title',
                 'content' => '<p>Test Article Content</p>',
                 'cover' => $this->file
@@ -111,7 +111,7 @@ class CreateArticleTest extends TestCase
     {
         // Send request with empty title
         $response = $this->withHeaders(['Authorization' => 'Bearer '. $this->token])
-            ->post('/api/articles', [
+            ->post('/articles', [
                 'title' => '',
                 'content' => '<p>Test Article Content</p>',
                 'cover' => $this->file
@@ -139,7 +139,7 @@ class CreateArticleTest extends TestCase
     {
         // Send request with empty content
         $response = $this->withHeaders(['Authorization' => 'Bearer '. $this->token])
-            ->post('/api/articles', [
+            ->post('/articles', [
                 'title' => 'Test Article Title',
                 'content' => '',
                 'cover' => $this->file
@@ -167,7 +167,7 @@ class CreateArticleTest extends TestCase
     {
         // Send request without cover
         $response = $this->withHeaders(['Authorization' => 'Bearer '. $this->token])
-            ->post('/api/articles', [
+            ->post('/articles', [
                 'title' => 'Test Article Title',
                 'content' => '<p>Test Article Content</p>',
             ]);

@@ -19,14 +19,9 @@ class GetAllArticlesTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected $user = null;
+    protected User $user;
 
-    protected $token = '';
-
-    public static function setUpBeforeClass(): void
-    {
-        parent::setUpBeforeClass();
-    }
+    protected string $token = '';
 
     protected function setUp(): void
     {
@@ -45,15 +40,10 @@ class GetAllArticlesTest extends TestCase
 
     protected function tearDown(): void
     {
-        parent::tearDown();
-
         //Delete generated users
         User::where('email', 'like', '%@example.%')->delete();
-    }
 
-    public static function tearDownAfterClass(): void
-    {
-        parent::tearDownAfterClass();
+        parent::tearDown();
     }
 
     /**
@@ -64,8 +54,7 @@ class GetAllArticlesTest extends TestCase
     public function testGetAllArticlesSuccess(): void
     {
         //Send request
-        $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
-            ->get('/articles');
+        $response = $this->get('/articles', ['Authorization' => 'Bearer '.$this->token]);
 
         //Assert that the request is successful
         $response->assertSuccessful();
@@ -80,7 +69,7 @@ class GetAllArticlesTest extends TestCase
     {
         //Send request
         $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
-            ->get('/api/articles');
+            ->get('/articles');
 
         //Assert that the request is successful
         $response->assertSuccessful();
@@ -109,13 +98,13 @@ class GetAllArticlesTest extends TestCase
     {
         //Send request
         $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
-            ->get('/api/articles?perPage=2&page=3');
+            ->get('/articles?perPage=2&page=3');
 
         //Assert that the request is successful
         $response->assertSuccessful();
 
         //Assert should contains currentPage property
-        $response->assertJson(fn (AssertableJson $json) => $json->where('currentPage', 3)
+        $response->assertJson(fn (AssertableJson $json) => $json->where('meta.current_page', 3)
                 ->etc()
         );
     }
@@ -129,12 +118,13 @@ class GetAllArticlesTest extends TestCase
     {
         //Send request
         $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
-            ->get('/api/articles?perPage=2&page=3');
+            ->get('/articles?perPage=2&page=3');
 
         //Assert that the request is successful
         $response->assertSuccessful();
 
         //Assert should contains currentPage property
+        dd($response);
         $response->assertJson(fn (AssertableJson $json) => $json->where('perPage', 2)
                 ->etc()
         );
@@ -149,7 +139,7 @@ class GetAllArticlesTest extends TestCase
     {
         //Send request
         $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
-            ->get('/api/articles?perPage=2&page=3');
+            ->get('/articles?perPage=2&page=3');
 
         //Assert that the request is successful
         $response->assertSuccessful();
@@ -168,7 +158,7 @@ class GetAllArticlesTest extends TestCase
     public function testShouldUnauthenticatedIfNotLoggedIn(): void
     {
         //Send request
-        $response = $this->get('/api/articles?perPage=2&page=3');
+        $response = $this->get('/articles?perPage=2&page=3');
 
         //Assert that the request is unauthorized (401)
         $response->assertUnauthorized();
@@ -192,7 +182,7 @@ class GetAllArticlesTest extends TestCase
 
         //Send request
         $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
-            ->get('/api/articles');
+            ->get('/articles');
 
         //Assert that the request is successful
         $response->assertSuccessful();
@@ -220,7 +210,7 @@ class GetAllArticlesTest extends TestCase
 
         //Send request
         $response = $this->withHeaders(['Authorization' => 'Bearer '.$token])
-            ->get('/api/articles');
+            ->get('/articles');
 
         //Assert that the request is successful
         $response->assertSuccessful();

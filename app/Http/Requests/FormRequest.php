@@ -37,7 +37,19 @@ abstract class FormRequest extends LaravelFormRequest
         $errors = (new ValidationException($validator))->errors();
 
         throw new HttpResponseException(
-            response()->json(['errors' => $errors], JsonResponse::HTTP_UNPROCESSABLE_ENTITY)
+            response()->json([
+                'message' => 'Periksa kembali data yang dimasukkan',
+                'errors' => $errors,
+            ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY)
+        );
+    }
+
+    protected function failedAuthorization()
+    {
+        throw new HttpResponseException(
+            response()->json([
+                'message' => 'Anda tidak memiliki akses',
+            ], 403)
         );
     }
 }

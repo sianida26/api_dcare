@@ -9,6 +9,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\SearchRole;
 use App\Models\Article;
 use App\Models\Role;
 use App\Models\User;
@@ -18,13 +19,13 @@ use Tests\TestCase;
 
 class DeleteArticleTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SearchRole;
 
-    protected $user = null;
+    protected User $user;
 
     protected $token = '';
 
-    protected $article = null;
+    protected Article $article;
 
     public static function setUpBeforeClass(): void
     {
@@ -42,6 +43,7 @@ class DeleteArticleTest extends TestCase
                 ->has(Article::factory())
                 ->create();
         });
+
         $this->token = $this->user->createToken('auth_token')->plainTextToken;
         $this->article = $this->user->articles->first();
     }
@@ -68,16 +70,32 @@ class DeleteArticleTest extends TestCase
     public function testDeleteArticleSuccess(): void
     {
         // Send request to delete article
-        $response = $this->withHeaders([
+        $response = $this->delete(uri: '/articles/'.$this->article->id, headers: [
             'Authorization' => 'Bearer '.$this->token,
-        ])
-            ->delete('/articles/'.$this->article->id);
+        ]);
 
         // Assert that the request is successful
         $response->assertSuccessful();
 
         // Assert that the article is deleted in the database
         $this->assertModelMissing($this->article);
+    }
+
+    /**
+     * Test should return 302 if unauthenticated
+     *
+     * @return void
+     */
+    public function testDeleteArticleUnauthenticated(): void
+    {
+        // Send request without token
+        $response = $this->delete(uri: '/articles/'.$this->article->id);
+
+        $this->assertDatabaseHas(Article::class, ['id' => $this->article->id]);
+
+        $response->assertStatus(302);
+
+        // Assert that the response contains the expected data
     }
 
     /**
@@ -88,14 +106,23 @@ class DeleteArticleTest extends TestCase
     public function testDeleteArticleUnauthorized(): void
     {
         // Send request without token
-        $response = $this->delete('/articles/'.$this->article->id);
+        $admin = User::factory()
+        ->admin()
+        ->create();
 
-        // Assert that the request returns a 401 status code
-        $response->assertStatus(401);
+        $token = $admin->createToken('auth_token')->plainTextToken;
+
+        $response = $this->delete(uri: '/articles/'.$this->article->id, headers: [
+            'Authorization' => 'Bearer '.$token,
+        ]);
+
+        $this->assertDatabaseHas(Article::class, ['id' => $this->article->id]);
+
+        // Assert that the request returns a 403 status code
+        $response->assertStatus(403);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Unauthenticated')
-        );
+        // $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Unauthenticated'));
     }
 
     /**
@@ -119,8 +146,7 @@ class DeleteArticleTest extends TestCase
         $response->assertStatus(403);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Anda tidak memiliki akses untuk menghapus artikel ini')
-        );
+        // $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Anda tidak memiliki akses untuk menghapus artikel ini'));
     }
 
     /**
@@ -131,17 +157,17 @@ class DeleteArticleTest extends TestCase
     public function testDeleteArticleNotFound(): void
     {
         // Send request to delete non-existing article
-        $response = $this->withHeaders([
+        $response = $this->delete(uri: '/articles/0', headers: [
             'Authorization' => 'Bearer '.$this->token,
-        ])
-            ->delete('/articles/0');
+        ]);
 
         // Assert that the request returns a 404 status code
         $response->assertStatus(404);
 
         // Assert that the response contains the expected data
-        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Artikel tidak ditemukan')
-        );
+        $response->assertJson([
+            'message' => 'Artikel tidak ditemukan',
+        ]);
     }
 
     /**

@@ -14,7 +14,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
 class CreateArticleTest extends TestCase
@@ -41,10 +40,10 @@ class CreateArticleTest extends TestCase
 
     protected function tearDown(): void
     {
-        parent::tearDown();
-
         // Remove generated users and articles
         User::where('email', 'like', '%@example.%')->delete();
+
+        parent::tearDown();
     }
 
     /**
@@ -55,12 +54,11 @@ class CreateArticleTest extends TestCase
     public function testCreateArticleSuccess(): void
     {
         // Send request
-        $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
-            ->post('/articles', [
-                'title' => 'Test Article Title',
-                'content' => '<p>Test Article Content</p>',
-                'cover' => $this->file,
-            ]);
+        $response = $this->post('/articles', [
+            'title' => 'Test Article Title',
+            'content' => '<p>Test Article Content</p>',
+            'cover' => $this->file,
+        ], ['Authorization' => 'Bearer '.$this->token]);
 
         // Assert that the request is successful
         $response->assertSuccessful();
@@ -88,12 +86,11 @@ class CreateArticleTest extends TestCase
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Send request
-        $response = $this->withHeaders(['Authorization' => 'Bearer '.$token])
-            ->post('/articles', [
-                'title' => 'Test Article Title',
-                'content' => '<p>Test Article Content</p>',
-                'cover' => $this->file,
-            ]);
+        $response = $this->post('/articles', [
+            'title' => 'Test Article Title',
+            'content' => '<p>Test Article Content</p>',
+            'cover' => $this->file,
+        ], ['Authorization' => 'Bearer '.$token]);
 
         // Assert that the request is forbidden
         $response->assertForbidden();
@@ -112,22 +109,18 @@ class CreateArticleTest extends TestCase
     public function testCreateArticleTitleValidation(): void
     {
         // Send request with empty title
-        $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
-            ->post('/articles', [
-                'title' => '',
-                'content' => '<p>Test Article Content</p>',
-                'cover' => $this->file,
-            ]);
+        $response = $this->post('/articles', [
+            'title' => '',
+            'content' => '<p>Test Article Content</p>',
+            'cover' => $this->file,
+        ], ['Authorization' => 'Bearer '.$this->token]);
 
         // Assert that the request returns a 422 status code
-        $response->assertUnprocessable();
-
+        $response->assertUnprocessable()
         // Assert that the response contains the expected error message
-        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn ($json) => $json->has('title', 'Harus diisi')
-                        ->etc()
-                )
-        );
+        ->assertJsonFragment(['message' => 'Periksa kembali data yang dimasukkan'])
+        // 'Harus diisi' -- buat locale nya
+        ->assertJsonValidationErrorFor('title');
     }
 
     /**
@@ -138,22 +131,18 @@ class CreateArticleTest extends TestCase
     public function testCreateArticleContentValidation(): void
     {
         // Send request with empty content
-        $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->token])
-            ->post('/articles', [
-                'title' => 'Test Article Title',
-                'content' => '',
-                'cover' => $this->file,
-            ]);
+        $response = $this->post('/articles', [
+            'title' => 'Test Article Title',
+            'content' => '',
+            'cover' => $this->file,
+        ], ['Authorization' => 'Bearer '.$this->token]);
 
         // Assert that the request returns a 422 status code
-        $response->assertStatus(422);
-
+        $response->assertUnprocessable()
         // Assert that the response contains the expected error message
-        $response->assertJson(fn (AssertableJson $json) => $json->has('message', 'Periksa kembali data yang dimasukkan')
-                ->has('errors', fn ($json) => $json->has('content', 'Harus diisi')
-                        ->etc()
-                )
-        );
+        ->assertJsonFragment(['message' => 'Periksa kembali data yang dimasukkan'])
+        // 'Harus diisi' -- buat locale nya
+        ->assertJsonValidationErrorFor('content');
     }
 
     /**

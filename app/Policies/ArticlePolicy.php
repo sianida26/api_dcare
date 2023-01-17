@@ -2,13 +2,14 @@
 
 namespace App\Policies;
 
+use App\Actions\SearchRole;
 use App\Models\Article;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class ArticlePolicy
 {
-    use HandlesAuthorization;
+    use HandlesAuthorization, SearchRole;
 
     /**
      * Determine whether the user can view any models.
@@ -39,9 +40,18 @@ class ArticlePolicy
      * @param  \App\Models\User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function create(User $user)
+    public function create(User $user): bool
     {
-        //
+        return $user->role_id != $this->role();
+    }
+
+    private function canBeDoneByDevelopersAndAdmin(User $user, Article $article): bool
+    {
+        if ($this->role(2) === $user->role_id) {
+            return true;
+        }
+
+        return $user->id === $article->user_id;
     }
 
     /**
@@ -51,9 +61,9 @@ class ArticlePolicy
      * @param  \App\Models\Article  $article
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function update(User $user, Article $article)
+    public function update(User $user, Article $article): bool
     {
-        //
+        return $this->canBeDoneByDevelopersAndAdmin($user, $article);
     }
 
     /**
@@ -63,9 +73,9 @@ class ArticlePolicy
      * @param  \App\Models\Article  $article
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function delete(User $user, Article $article)
+    public function delete(User $user, Article $article): bool
     {
-        //
+        return $this->canBeDoneByDevelopersAndAdmin($user, $article);
     }
 
     /**

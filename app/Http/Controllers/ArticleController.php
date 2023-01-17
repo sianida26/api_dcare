@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateArticleRequest;
 use App\Http\Resources\ArticleCollection;
 use App\Http\Resources\ArticleResource;
 use App\Models\Article;
+use Illuminate\Http\Request;
 
 class ArticleController extends Controller
 {
@@ -15,9 +16,11 @@ class ArticleController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        return new ArticleCollection(Article::query()->paginate());
+        return new ArticleCollection(
+            Article::query()->paginate(perPage: $request->perPage ?? 15)
+        );
     }
 
     /**
@@ -76,6 +79,8 @@ class ArticleController extends Controller
      */
     public function destroy(Article $article)
     {
+        $this->authorize('delete', $article);
+
         $article->delete();
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Article;
+
 // use Illuminate\Foundation\Http\FormRequest;
 
 class StoreArticleRequest extends FormRequest
@@ -13,7 +15,7 @@ class StoreArticleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('create', Article::class);
     }
 
     /**

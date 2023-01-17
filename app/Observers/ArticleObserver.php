@@ -38,6 +38,8 @@ class ArticleObserver
     public function deleted(Article $article)
     {
         $article->deleteCoverPhoto();
+
+        $article->delete();
     }
 
     /**
@@ -60,5 +62,7 @@ class ArticleObserver
     public function forceDeleted(Article $article)
     {
         $article->deleteCoverPhoto();
+
+        $article->delete();
     }
 }
